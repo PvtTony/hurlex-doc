@@ -14,15 +14,19 @@ C_OBJECTS = $(patsubst %.c, %.o, $(C_SOURCES))
 S_SOURCES = $(shell find . -name "*.s")
 S_OBJECTS = $(patsubst %.s, %.o, $(S_SOURCES))
 
-CC = gcc
-LD = ld
-ASM = nasm
+# Mac OS 下 工具链路径
+LLVM_BIN = /usr/local/Cellar/llvm/6.0.1/bin
+NASM_BIN = /usr/local/Cellar/nasm/2.13.03/bin
+CC = $(LLVM_BIN)/clang
+LD = $(LLVM_BIN)/clang
+ASM = $(NASM_BIN)/nasm
 
-C_FLAGS = -c -Wall -m32 -ggdb -gstabs+ -nostdinc -fno-builtin -fno-stack-protector -I include
-LD_FLAGS = -T scripts/kernel.ld -m elf_i386 -nostdlib
+C_FLAGS = -c -Wall -m32 -ggdb -g -nostdinc -fno-builtin -fno-stack-protector -I include -target i386-none-elf
+# LD_FLAGS = -T scripts/kernel.ld -m elf_i386 -nostdlib 
+LD_FLAGS = -target i386-linux-elf -nostdlib -Wl,scripts/kernel.ld -fuse-ld=lld
 ASM_FLAGS = -f elf -g -F stabs
 
-all: $(S_OBJECTS) $(C_OBJECTS) link update_image
+all: $(S_OBJECTS) $(C_OBJECTS) link
 
 # The automatic variable `$<' is just the first prerequisite
 .c.o:
@@ -43,22 +47,30 @@ clean:
 
 .PHONY:update_image
 update_image:
-	sudo mount floppy.img /mnt/kernel
-	sudo cp hx_kernel /mnt/kernel/hx_kernel
+	mkdir mntkernel
+	$(eval $@_DSK := $(shell hdid -nomount ./floppy.img))
+	mount_msdos $($@_DSK) ./mntkernel
+	cp hx_kernel ./mntkernel/hx_kernel
 	sleep 1
-	sudo umount /mnt/kernel
+	umount ./mntkernel
+	hdiutil detach $($@_DSK)
+	rmdir mntkernel
 
 .PHONY:mount_image
 mount_image:
-	sudo mount floppy.img /mnt/kernel
+	mkdir mntkernel
+	$(eval $@_DSK := $(shell hdid -nomount ./floppy.img))
+	mount_msdos $($@_DSK) ./mntkernel
 
 .PHONY:umount_image
 umount_image:
-	sudo umount /mnt/kernel
+	umount ./mntkernel
+	hdiutil detach $($@_DSK)
+	rmdir mntkernel
 
 .PHONY:qemu
 qemu:
-	qemu -fda floppy.img -boot a
+	qemu-system-i386 -m 32m -boot order=a -fda floppy.img
 
 .PHONY:bochs
 bochs:
@@ -66,7 +78,7 @@ bochs:
 
 .PHONY:debug
 debug:
-	qemu -S -s -fda floppy.img -boot a &
+	qemu-system-i386 -S -s -boot order=a -fda floppy.img  &
 	sleep 1
 	cgdb -x scripts/gdbinit
 

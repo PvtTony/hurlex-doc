@@ -49,8 +49,7 @@ dd MBOOT_CHECKSUM       ; 检测数值，其含义在定义处
 [EXTERN kern_entry] 	; 声明内核 C 代码的入口函数
 
 start:
-	cli  			 ; 此时还没有设置好保护模式的中断处理，要关闭中断
-				 ; 所以必须关闭中断
+	cli  			 ; 此时还没有设置好保护模式的中断处理，要关闭中断 所以必须关闭中断
 	mov esp, STACK_TOP  	 ; 设置内核栈地址
 	mov ebp, 0 		 ; 帧指针修改为 0
 	and esp, 0FFFFFFF0H	 ; 栈地址按照16字节对齐
