@@ -15,8 +15,8 @@ S_SOURCES = $(shell find . -name "*.s")
 S_OBJECTS = $(patsubst %.s, %.o, $(S_SOURCES))
 
 # Mac OS 下 工具链路径
-LLVM_BIN = /usr/local/Cellar/llvm/6.0.1/bin
-NASM_BIN = /usr/local/Cellar/nasm/2.13.03/bin
+LLVM_BIN = /usr/local/Cellar/llvm/9.0.0_1/bin/
+NASM_BIN = /usr/local/Cellar/nasm/2.14.02/bin/
 CC = $(LLVM_BIN)/clang
 LD = $(LLVM_BIN)/clang
 ASM = $(NASM_BIN)/nasm
